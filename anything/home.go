@@ -45,21 +45,28 @@ type TInterface interface {
 //		log.Println("Error router:", mission.(TInterface).getStation(), "does not exist ")
 //	}
 //}
-type Subway interface {
-	chan any
-	map[string]Station
-	Schedule()
-	InitChanAny()
-	Register(f func(tInterface ...any), any ...any)
-	InSubway()
-}
+//type Subway interface {
+//	chan any
+//	map[string]Station
+//	Schedule()
+//	InitChanAny()
+//	Register(f func(tInterface ...any), any ...any)
+//	InSubway()
+//}
 
 // Station 站台 使用站台来区分多任务的模式，以期望达到最优化的效果
 // 站台只需要注册一次 并且支持在程序执行中进行注册和删除。
-type Station interface {
-	//当前站台名称
-	string
-	//当前站台方法
-	func(...any)
-	int
+//type Station interface {
+//	//当前站台名称
+//	string
+//	//当前站台方法
+//	func(...any)
+//	int
+//}
+
+//Mission 即使是灰尘 也有他的使命
+//Even the dust has his pursuit
+type Mission struct {
+	Name   string
+	Pursue chan any
 }
