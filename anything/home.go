@@ -1,3 +1,5 @@
+package anything
+
 // Package anything
 // 程序执行的道路或许以前我们需要按部就班，但也出现了很多问题。
 // 像下面这样
@@ -20,53 +22,24 @@
 // 100%    80%     60%      40%
 // 100%    100%    80%      60%
 // 100%    100%    100%     80%
-// 100%    100%    100%     100%  预期总用时(A+B+C+D)/2.7
-package anything
+// 100%    100%    100%     100%  预期总用时约等于(A+B+C+D)/2.7
 
-type TInterface interface {
-	run(params ...any)
-	goNext() any
-	getStation() string
+const ExitFunction = "EXIT_FUNCTION"
+
+type Nothing interface {
+	Register(...any)
+	Schedule(string, ...any) any
+	Init()
+	[]any
+	map[string]func(any, chan *Mission, []any)
+	chan *Mission
+	map[string]*Mission
 }
-
-// Subway 创造性的使用方法 必须实现调度器方法 Schedule()
-// 配合Station使用
-// 像下面这样
-//for {
-//	mission := <-s.mission
-//	if v, ok := s.stations[mission.(TInterface).getStation()]; ok {
-//		switch v.mode {
-//		case 1:
-//			go v.area(mission)
-//		case 0:
-//			go v.area(mission)
-//		}
-//	} else {
-//		log.Println("Error router:", mission.(TInterface).getStation(), "does not exist ")
-//	}
-//}
-//type Subway interface {
-//	chan any
-//	map[string]Station
-//	Schedule()
-//	InitChanAny()
-//	Register(f func(tInterface ...any), any ...any)
-//	InSubway()
-//}
-
-// Station 站台 使用站台来区分多任务的模式，以期望达到最优化的效果
-// 站台只需要注册一次 并且支持在程序执行中进行注册和删除。
-//type Station interface {
-//	//当前站台名称
-//	string
-//	//当前站台方法
-//	func(...any)
-//	int
-//}
 
 //Mission 即使是灰尘 也有他的使命
 //Even the dust has his pursuit
 type Mission struct {
-	Name   string
-	Pursue chan any
+	Name    string
+	Pursuit []any
+	A       []any
 }
