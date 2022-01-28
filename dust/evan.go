@@ -7,6 +7,7 @@ import (
 	"golang.org/x/net/html"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -39,7 +40,10 @@ func (d *Dust) PersistenceUrl(mission chan *anything.Mission, data []any) {
 		anything.ErrorExit(err)
 		find := htmlquery.Find(doc, "//a")
 		img := htmlquery.Find(doc, "//img")
+
+		//可解耦方法
 		mission <- &anything.Mission{Name: "FindAllIMG", Pursuit: []any{img}}
+
 		m := make([]string, 0)
 		for i := range find {
 			if val := htmlquery.SelectAttr(find[i], "href"); strings.Index(val, needUrl) != -1 {
@@ -126,4 +130,13 @@ func (d *Dust) getOnlyInt(s string) int {
 		i += int(s[k])
 	}
 	return i
+}
+
+func (d *Dust) StartMission(mission chan *anything.Mission, a []any) {
+	open, err := os.Open(a[0].(string))
+	anything.ErrorExit(err)
+	all, err := ioutil.ReadAll(open)
+	anything.ErrorExit(err)
+	mission <- &anything.Mission{Name: "PersistenceUrl", Pursuit: []any{string(all), "KKKKKKKKKKKKK"}}
+	mission <- &anything.Mission{Name: anything.ExitFunction}
 }

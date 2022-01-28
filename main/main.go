@@ -2,26 +2,23 @@ package main
 
 import (
 	"fmt"
-	"github.com/iEvan-lhr/nihility-dust/anything"
 	"github.com/iEvan-lhr/nihility-dust/dust"
-	"io/ioutil"
-	"os"
 	"time"
 )
 
 func main() {
 	start := time.Now()
 	w := dust.Wind{}
+	//方法注册
 	w.Register(&dust.Dust{})
+	//执行器初始化
 	w.Init()
-	open, err := os.Open("dust/test.html")
-	anything.ErrorExit(err)
-	all, err := ioutil.ReadAll(open)
-	anything.ErrorExit(err)
-	w.Schedule("PersistenceUrl", string(all), "KKKKKKKKKK")
-	_, ok := w.A["PersistenceUrl"]
+	//入口
+	w.Schedule("StartMission", "dust/test.html")
+	_, ok := w.A["StartMission"]
 	for !ok {
-		_, ok = w.A["PersistenceUrl"]
+		// 出口
+		_, ok = w.A["StartMission"]
 	}
 	fmt.Println(time.Now().Sub(start))
 }
