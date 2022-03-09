@@ -12,6 +12,7 @@ type Wind struct {
 	M map[string]reflect.Value
 	C chan *anything.Mission
 	A sync.Map
+	//R []reflect.Value
 }
 
 // Schedule 方法调度器
@@ -54,6 +55,18 @@ func (w *Wind) Init() {
 			method := dus.Method(j)
 			if method.Name != "" && method.Name != " " {
 				w.M[method.Name] = client.MethodByName(method.Name)
+			}
+		}
+	}
+}
+
+func (w *Wind) RegisterRouters(values []reflect.Value) {
+	for i := range values {
+		dus := values[i].Type()
+		for j := 0; j < dus.NumMethod(); j++ {
+			method := dus.Method(j)
+			if method.Name != "" && method.Name != " " {
+				w.M[method.Name] = values[i].MethodByName(method.Name)
 			}
 		}
 	}
