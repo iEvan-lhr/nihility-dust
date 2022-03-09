@@ -1,5 +1,7 @@
 package anything
 
+import "sync"
+
 // Package anything
 // 程序执行的道路或许以前我们需要按部就班，但也出现了很多问题。
 // 像下面这样
@@ -25,15 +27,16 @@ package anything
 // 100%    100%    100%     100%  预期总用时约等于(A+B+C+D)/2.7
 
 const ExitFunction = "EXIT_FUNCTION"
+const DC = "DISCHARGE_CARGO"
 
 type Nothing interface {
 	Register(...any)
-	Schedule(string, ...any) any
+	Schedule(string, ...any)
 	Init()
 	[]any
 	map[string]func(any, chan *Mission, []any)
 	chan *Mission
-	map[string]*Mission
+	sync.Map
 }
 
 //Mission 即使是灰尘 也有他的使命
@@ -42,4 +45,11 @@ type Mission struct {
 	Name    string
 	Pursuit []any
 	A       []any
+}
+
+// Everything 一切都源自于根
+// Everything comes from the root
+type Everything interface {
+	Empty()
+	map[int]string
 }

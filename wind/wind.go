@@ -1,16 +1,17 @@
-package dust
+package wind
 
 import (
 	"github.com/iEvan-lhr/nihility-dust/anything"
 	"reflect"
+	"sync"
 )
 
 // Wind 实现自Home Nothing
 type Wind struct {
 	D []any
-	M map[string]func(*Dust, chan *anything.Mission, []any)
+	M map[string]reflect.Value
 	C chan *anything.Mission
-	A map[string]*anything.Mission
+	A sync.Map
 }
 
 // Schedule 方法调度器
@@ -20,18 +21,22 @@ func (w *Wind) Schedule(startName string, inData ...any) {
 			Name:    startName,
 			Pursuit: inData,
 		}
-		i := 0
 		for {
 			mission := <-w.C
-			if mission.Name != anything.ExitFunction {
-				i++
-				go w.M[mission.Name](&Dust{}, w.C, mission.Pursuit)
-			} else {
-				i--
-				if i == 0 {
-					w.A[startName] = mission
-					return
-				}
+			//log.Println(mission.Name)
+			switch mission.Name {
+			case anything.DC:
+				w.A.Store(startName+anything.DC, mission)
+			case anything.ExitFunction:
+				w.A.Store(startName+anything.ExitFunction, mission)
+				return
+			default:
+				go func() {
+					defer func() {
+						recover()
+					}()
+					w.M[mission.Name].Call([]reflect.Value{reflect.ValueOf(w.C), reflect.ValueOf(mission.Pursuit)})
+				}()
 			}
 		}
 	}()
@@ -39,15 +44,16 @@ func (w *Wind) Schedule(startName string, inData ...any) {
 
 // Init 初始化Wind tags:"来无影去无踪"
 func (w *Wind) Init() {
-	w.M = make(map[string]func(*Dust, chan *anything.Mission, []any))
+	w.M = make(map[string]reflect.Value)
 	w.C = make(chan *anything.Mission, 10)
-	w.A = make(map[string]*anything.Mission)
+	w.A = sync.Map{}
 	for i := range w.D {
-		dus := reflect.ValueOf(w.D[i]).Type()
+		client := reflect.ValueOf(w.D[i])
+		dus := client.Type()
 		for j := 0; j < dus.NumMethod(); j++ {
 			method := dus.Method(j)
 			if method.Name != "" && method.Name != " " {
-				w.M[method.Name] = method.Func.Interface().(func(*Dust, chan *anything.Mission, []any))
+				w.M[method.Name] = client.MethodByName(method.Name)
 			}
 		}
 	}
