@@ -21,7 +21,8 @@ type Wind struct {
 // Schedule 方法调度器
 func (w *Wind) Schedule(startName string, inData ...any) int64 {
 	key := w.IWork.GetId()
-	go func() {
+	go func(I int64) {
+
 		w.C <- &anything.Mission{
 			Name:    startName,
 			I:       key,
@@ -30,13 +31,14 @@ func (w *Wind) Schedule(startName string, inData ...any) int64 {
 		for {
 			mission := <-w.C
 			//log.Println(mission.Name)
+			//fmt.Println(mission.I)
 			switch mission.Name {
 			case anything.DC:
 				//mission.C = 0
-				w.A.Store(mission.I, mission.Pursuit)
+				w.A.Store(I, mission.Pursuit)
 			case anything.ExitFunction:
 				//mission.C = 1
-				w.A.Store(mission.I, mission.Pursuit)
+				w.A.Store(I, mission.Pursuit)
 				return
 			default:
 				go func() {
@@ -47,7 +49,7 @@ func (w *Wind) Schedule(startName string, inData ...any) int64 {
 				}()
 			}
 		}
-	}()
+	}(key)
 	return key
 }
 

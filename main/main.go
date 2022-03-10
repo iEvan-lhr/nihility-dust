@@ -24,7 +24,7 @@ func main() {
 		// 出口
 		if mission, ok := w.A.Load(schedule); ok {
 			//fmt.Println(schedule)
-			fmt.Println(mission.(any[]))
+			fmt.Println(mission)
 			break
 		}
 	}
