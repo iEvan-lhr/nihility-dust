@@ -23,6 +23,7 @@ func main() {
 	for {
 		// 出口
 		if mission, ok := w.A.Load(schedule); ok {
+			//fmt.Println(schedule)
 			fmt.Println(mission)
 			break
 		}
