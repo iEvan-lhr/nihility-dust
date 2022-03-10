@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/iEvan-lhr/nihility-dust/anything"
+	"net/http"
 	"reflect"
 	"sync"
 	"time"
@@ -30,8 +31,7 @@ func (w *Wind) Schedule(startName string, inData ...any) int64 {
 		}
 		for {
 			mission := <-w.C
-			//log.Println(mission.Name)
-			//fmt.Println(mission.I)
+			fmt.Println("当前方法Schedule：32", key, inData[1].(*http.Request).FormValue("team"), mission.Pursuit)
 			switch mission.Name {
 			case anything.DC:
 				//mission.C = 0
