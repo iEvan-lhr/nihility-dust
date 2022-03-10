@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/iEvan-lhr/nihility-dust/anything"
-	"net/http"
 	"reflect"
 	"sync"
 	"time"
@@ -14,7 +13,7 @@ import (
 type Wind struct {
 	D     []any
 	M     map[string]reflect.Value
-	C     chan *anything.Mission
+	C     map[int64]chan *anything.Mission
 	A     sync.Map
 	IWork *Worker
 }
@@ -23,15 +22,14 @@ type Wind struct {
 func (w *Wind) Schedule(startName string, inData ...any) int64 {
 	key := w.IWork.GetId()
 	go func(I int64) {
-
-		w.C <- &anything.Mission{
-			Name:    startName,
-			I:       key,
+		w.C[I] = make(chan *anything.Mission, 10)
+		w.C[I] <- &anything.Mission{
+			Name: startName,
+			//I:       key,
 			Pursuit: inData,
 		}
 		for {
-			mission := <-w.C
-			fmt.Println("当前方法Schedule：32", key, inData[1].(*http.Request).FormValue("team"), mission.Pursuit)
+			mission := <-w.C[key]
 			switch mission.Name {
 			case anything.DC:
 				//mission.C = 0
@@ -45,7 +43,7 @@ func (w *Wind) Schedule(startName string, inData ...any) int64 {
 					defer func() {
 						recover()
 					}()
-					w.M[mission.Name].Call([]reflect.Value{reflect.ValueOf(w.C), reflect.ValueOf(mission.Pursuit)})
+					w.M[mission.Name].Call([]reflect.Value{reflect.ValueOf(w.C[key]), reflect.ValueOf(mission.Pursuit)})
 				}()
 			}
 		}
@@ -62,7 +60,7 @@ func (w *Wind) Init() {
 	}
 	w.IWork = node
 	w.M = make(map[string]reflect.Value)
-	w.C = make(chan *anything.Mission, 10)
+	w.C = make(map[int64]chan *anything.Mission)
 	w.A = sync.Map{}
 	for i := range w.D {
 		client := reflect.ValueOf(w.D[i])
