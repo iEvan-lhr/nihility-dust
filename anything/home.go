@@ -43,8 +43,10 @@ type Nothing interface {
 //Even the dust has his pursuit
 type Mission struct {
 	Name    string
+	I       int64
 	Pursuit []any
 	A       []any
+	C       byte
 }
 
 // Everything 一切都源自于根

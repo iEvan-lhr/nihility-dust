@@ -4,6 +4,7 @@ import (
 	"github.com/iEvan-lhr/nihility-dust/anything"
 	"reflect"
 	"sync"
+	"time"
 )
 
 // Wind 实现自Home Nothing
@@ -16,10 +17,12 @@ type Wind struct {
 }
 
 // Schedule 方法调度器
-func (w *Wind) Schedule(startName string, inData ...any) {
+func (w *Wind) Schedule(startName string, inData ...any) int64 {
+	key := time.Now().Unix()
 	go func() {
 		w.C <- &anything.Mission{
 			Name:    startName,
+			I:       key,
 			Pursuit: inData,
 		}
 		for {
@@ -27,9 +30,11 @@ func (w *Wind) Schedule(startName string, inData ...any) {
 			//log.Println(mission.Name)
 			switch mission.Name {
 			case anything.DC:
-				w.A.Store(startName+anything.DC, mission)
+				mission.C = 0
+				w.A.Store(key, mission)
 			case anything.ExitFunction:
-				w.A.Store(startName+anything.ExitFunction, mission)
+				mission.C = 1
+				w.A.Store(key, mission)
 				return
 			default:
 				go func() {
@@ -41,6 +46,7 @@ func (w *Wind) Schedule(startName string, inData ...any) {
 			}
 		}
 	}()
+	return key
 }
 
 // Init 初始化Wind tags:"来无影去无踪"
