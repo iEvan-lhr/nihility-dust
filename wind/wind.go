@@ -32,11 +32,11 @@ func (w *Wind) Schedule(startName string, inData ...any) int64 {
 			//log.Println(mission.Name)
 			switch mission.Name {
 			case anything.DC:
-				mission.C = 0
-				w.A.Store(key, mission)
+				//mission.C = 0
+				w.A.Store(mission.I, mission.Pursuit)
 			case anything.ExitFunction:
-				mission.C = 1
-				w.A.Store(key, mission)
+				//mission.C = 1
+				w.A.Store(mission.I, mission.Pursuit)
 				return
 			default:
 				go func() {
