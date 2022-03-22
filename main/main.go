@@ -19,13 +19,14 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 	//入口
 	start := time.Now()
-	schedule := w.Schedule("CheckIsBig", "dust/test.html")
+	schedule := w.Schedule("CheckIsBig", 25)
 	for {
 		// 出口
 		if mission, ok := w.A.Load(schedule); ok {
-			//fmt.Println(schedule)
-			fmt.Println(mission)
-			break
+			fmt.Println(mission.([]any)[0])
+			if mission.([]any)[0] == 23 {
+				break
+			}
 		}
 	}
 	fmt.Println(time.Now().Sub(start))

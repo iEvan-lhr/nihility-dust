@@ -1,10 +1,15 @@
 package anything
 
-import "fmt"
+import "log"
 
 func ErrorExit(err error) {
 	if err != nil {
-		//panic(err.Error())
-		fmt.Println(err.Error())
+		panic(err.Error())
+	}
+}
+
+func ErrorDontExit(err error) {
+	if err != nil {
+		log.Println(err.Error())
 	}
 }
