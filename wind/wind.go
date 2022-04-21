@@ -16,6 +16,7 @@ type Wind struct {
 	M     map[string]reflect.Value
 	C     map[int64]chan *anything.Mission
 	A     sync.Map
+	E     map[int64]chan struct{}
 	IWork *Worker
 }
 
