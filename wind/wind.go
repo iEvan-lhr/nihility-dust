@@ -23,11 +23,11 @@ type Wind struct {
 // Schedule 方法调度器
 func (w *Wind) Schedule(startName string, inData ...any) int64 {
 	key := w.IWork.GetId()
+	w.E[key] = make(chan struct{})
 	go func(I int64) {
 		defer func() {
 			delete(w.C, I)
 		}()
-		w.E[key] = make(chan struct{})
 		w.C[I] = make(chan *anything.Mission, 10)
 		w.C[I] <- &anything.Mission{
 			Name:    startName,
