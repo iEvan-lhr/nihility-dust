@@ -1,6 +1,9 @@
 package anything
 
-import "sync"
+import (
+	"reflect"
+	"sync"
+)
 
 // Package anything
 // 程序执行的道路或许以前我们需要按部就班，但也出现了很多问题。
@@ -31,12 +34,13 @@ const DC = "DISCHARGE_CARGO"
 
 type Nothing interface {
 	Register(...any)
-	Schedule(string, ...any)
+	Schedule(string, ...any) int64
 	Init()
 	[]any
-	map[string]func(any, chan *Mission, []any)
-	chan *Mission
+	map[string]reflect.Value
+	map[int64]chan *Mission
 	sync.Map
+	map[int64]chan struct{}
 }
 
 //Mission 即使是灰尘 也有他的使命
