@@ -27,6 +27,7 @@ func (w *Wind) Schedule(startName string, inData ...any) int64 {
 		defer func() {
 			delete(w.C, I)
 		}()
+		w.E[key] = make(chan struct{})
 		w.C[I] = make(chan *anything.Mission, 10)
 		w.C[I] <- &anything.Mission{
 			Name:    startName,
@@ -41,6 +42,7 @@ func (w *Wind) Schedule(startName string, inData ...any) int64 {
 			case anything.ExitFunction:
 				//mission.C = 1
 				w.A.Store(I, mission.Pursuit)
+				w.E[key] <- struct{}{}
 				return
 			default:
 				go func() {
