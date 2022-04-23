@@ -67,6 +67,7 @@ func (w *Wind) Init() {
 	w.IWork = node
 	w.M = make(map[string]reflect.Value)
 	w.C = make(map[int64]chan *anything.Mission)
+	w.E = make(map[int64]chan struct{})
 	w.A = sync.Map{}
 	for i := range w.D {
 		client := reflect.ValueOf(w.D[i])
