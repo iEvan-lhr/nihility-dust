@@ -23,7 +23,7 @@ type Wind struct {
 // Schedule 方法调度器
 func (w *Wind) Schedule(startName string, inData ...any) int64 {
 	key := w.IWork.GetId()
-	w.E[key] = make(chan struct{})
+	w.E[key] = make(chan struct{}, 10)
 	go func(I int64) {
 		defer func() {
 			delete(w.C, I)
