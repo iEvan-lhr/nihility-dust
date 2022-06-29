@@ -31,6 +31,7 @@ import (
 
 const ExitFunction = "EXIT_FUNCTION"
 const DC = "DISCHARGE_CARGO"
+const NM = "NEW_MISSION"
 
 type Nothing interface {
 	Register(...any)

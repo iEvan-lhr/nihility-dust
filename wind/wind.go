@@ -26,6 +26,10 @@ func (w *Wind) Schedule(startName string, inData ...any) int64 {
 	w.E[key] = make(chan struct{}, 10)
 	go func(I int64) {
 		defer func() {
+			if err := recover(); err != nil {
+				fmt.Println("Schedule Error!------ Exit Mission", "Error:", err, "MissionName:", w.C[key])
+				w.E[key] <- struct{}{}
+			}
 			delete(w.C, I)
 		}()
 		w.C[I] = make(chan *anything.Mission, 10)
@@ -44,13 +48,10 @@ func (w *Wind) Schedule(startName string, inData ...any) int64 {
 				w.A.Store(I, mission.Pursuit)
 				w.E[key] <- struct{}{}
 				return
+			case anything.NM:
+				go w.Schedule(mission.Name, mission.Pursuit)
 			default:
-				go func() {
-					defer func() {
-						recover()
-					}()
-					w.M[mission.Name].Call([]reflect.Value{reflect.ValueOf(w.C[key]), reflect.ValueOf(mission.Pursuit)})
-				}()
+				w.M[mission.Name].Call([]reflect.Value{reflect.ValueOf(w.C[key]), reflect.ValueOf(mission.Pursuit)})
 			}
 		}
 	}(key)
