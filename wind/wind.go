@@ -41,15 +41,19 @@ func (w *Wind) Schedule(startName string, inData ...any) int64 {
 			mission := <-w.C[key]
 			switch mission.Name {
 			case anything.DC:
-				//mission.C = 0
 				w.A.Store(I, mission.Pursuit)
 			case anything.ExitFunction:
-				//mission.C = 1
 				w.A.Store(I, mission.Pursuit)
 				w.E[key] <- struct{}{}
 				return
 			case anything.NM:
 				go w.Schedule(mission.Name, mission.Pursuit)
+			case anything.IM:
+				m := w.C[key]
+				w.C[key] = make(chan *anything.Mission)
+				w.M[mission.Name].Call([]reflect.Value{reflect.ValueOf(w.C[key]), reflect.ValueOf(m)})
+			case anything.RM:
+				w.C[key] = mission.Pursuit[0].(chan *anything.Mission)
 			default:
 				w.M[mission.Name].Call([]reflect.Value{reflect.ValueOf(w.C[key]), reflect.ValueOf(mission.Pursuit)})
 			}
