@@ -51,7 +51,13 @@ func (w *Wind) Schedule(startName string, inData ...any) int64 {
 			case anything.RM:
 				log.Println("RM MissionName:")
 			default:
-				w.M[mission.Name].Call([]reflect.Value{reflect.ValueOf(w.C[key]), reflect.ValueOf(mission.Pursuit)})
+				go func() {
+					if err := recover(); err != nil {
+						fmt.Println("Schedule Error!------ Exit Mission", "Error:", err, "MissionName:", w.C[key])
+						w.E[key] <- struct{}{}
+					}
+					w.M[mission.Name].Call([]reflect.Value{reflect.ValueOf(w.C[key]), reflect.ValueOf(mission.Pursuit)})
+				}()
 			}
 		}
 	}(key)
