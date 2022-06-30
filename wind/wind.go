@@ -48,12 +48,8 @@ func (w *Wind) Schedule(startName string, inData ...any) int64 {
 				return
 			case anything.NM:
 				go w.Schedule(mission.Name, mission.Pursuit)
-			case anything.IM:
-				m := w.C[key]
-				w.C[key] = make(chan *anything.Mission)
-				w.M[mission.Name].Call([]reflect.Value{reflect.ValueOf(w.C[key]), reflect.ValueOf(m)})
 			case anything.RM:
-				w.C[key] = mission.Pursuit[0].(chan *anything.Mission)
+				log.Println("RM MissionName:")
 			default:
 				w.M[mission.Name].Call([]reflect.Value{reflect.ValueOf(w.C[key]), reflect.ValueOf(mission.Pursuit)})
 			}
