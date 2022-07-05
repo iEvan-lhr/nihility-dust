@@ -25,7 +25,9 @@ type Wind struct {
 func (w *Wind) Schedule(startName string, inData ...any) int64 {
 	key := w.IWork.GetId()
 	w.E[key] = make(chan struct{}, 10)
-	go func(I int64) {
+	var doFunc func(i int64, name string, data ...any)
+	w.C[key] = make(chan *anything.Mission, 10)
+	doFunc = func(I int64, name string, data ...any) {
 		defer func() {
 			if err := recover(); err != nil {
 				fmt.Println("Schedule Error!------ Exit Mission", "Error:", err, "MissionName:", w.C[key])
@@ -33,27 +35,28 @@ func (w *Wind) Schedule(startName string, inData ...any) int64 {
 			}
 			delete(w.C, I)
 		}()
-		w.C[I] = make(chan *anything.Mission, 10)
 		w.C[I] <- &anything.Mission{
-			Name:    startName,
-			Pursuit: inData,
+			Name:    name,
+			Pursuit: data,
 		}
 		for {
-			mission := <-w.C[key]
+			mission := <-w.C[I]
 			switch mission.Name {
 			case anything.DC:
 				w.A.Store(I, mission.Pursuit)
 			case anything.ExitFunction:
 				w.A.Store(I, mission.Pursuit)
-				w.E[key] <- struct{}{}
+				w.E[I] <- struct{}{}
 				return
 			case anything.NM:
-				w.Schedule(mission.Name, mission.Pursuit)
+				k := w.IWork.GetId()
+				w.C[k] = mission.T
+				doFunc(k, mission.Pursuit[0].(string), mission.Pursuit[1:])
 			case anything.IM:
 				go func() {
 					if err := recover(); err != nil {
-						fmt.Println("Schedule Error!------ Exit Mission", "Error:", err, "MissionName:", w.C[key])
-						w.E[key] <- struct{}{}
+						fmt.Println("Schedule Error!------ Exit Mission", "Error:", err, "MissionName:", w.C[I])
+						w.E[I] <- struct{}{}
 					}
 					w.M[mission.Pursuit[0].(string)].Call([]reflect.Value{reflect.ValueOf(mission.T), reflect.ValueOf(mission.Pursuit[1:])})
 				}()
@@ -62,14 +65,15 @@ func (w *Wind) Schedule(startName string, inData ...any) int64 {
 			default:
 				go func() {
 					if err := recover(); err != nil {
-						fmt.Println("Schedule Error!------ Exit Mission", "Error:", err, "MissionName:", w.C[key])
-						w.E[key] <- struct{}{}
+						fmt.Println("Schedule Error!------ Exit Mission", "Error:", err, "MissionName:", w.C[I])
+						w.E[I] <- struct{}{}
 					}
-					w.M[mission.Name].Call([]reflect.Value{reflect.ValueOf(w.C[key]), reflect.ValueOf(mission.Pursuit)})
+					w.M[mission.Name].Call([]reflect.Value{reflect.ValueOf(w.C[I]), reflect.ValueOf(mission.Pursuit)})
 				}()
 			}
 		}
-	}(key)
+	}
+	go doFunc(key, startName, inData)
 	return key
 }
 
