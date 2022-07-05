@@ -19,3 +19,9 @@ func DoChanTemp(mission chan *Mission, pursuit []any) chan *Mission {
 	mission <- &mis
 	return mis.T
 }
+
+func DoChanN(mission chan *Mission, pursuit []any) chan *Mission {
+	mis := Mission{Name: NM, Pursuit: pursuit, T: make(chan *Mission, 2)}
+	mission <- &mis
+	return mis.T
+}
