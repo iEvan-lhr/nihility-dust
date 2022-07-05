@@ -33,12 +33,15 @@ func (w *Wind) Schedule(startName string, inData ...any) int64 {
 			delete(w.C, I)
 		}()
 		w.C[I] = make(chan *anything.Mission, 10)
+		tempChan := make(chan *anything.Mission, 2)
 		w.C[I] <- &anything.Mission{
 			Name:    startName,
 			Pursuit: inData,
+			T:       tempChan,
 		}
 		for {
 			mission := <-w.C[key]
+			mission.T = tempChan
 			switch mission.Name {
 			case anything.DC:
 				w.A.Store(I, mission.Pursuit)
@@ -47,7 +50,15 @@ func (w *Wind) Schedule(startName string, inData ...any) int64 {
 				w.E[key] <- struct{}{}
 				return
 			case anything.NM:
-				go w.Schedule(mission.Name, mission.Pursuit)
+				w.Schedule(mission.Name, mission.Pursuit)
+			case anything.IM:
+				go func() {
+					if err := recover(); err != nil {
+						fmt.Println("Schedule Error!------ Exit Mission", "Error:", err, "MissionName:", w.C[key])
+						w.E[key] <- struct{}{}
+					}
+					w.M[mission.Pursuit[0].(string)].Call([]reflect.Value{reflect.ValueOf(mission.T), reflect.ValueOf(mission.Pursuit[1:])})
+				}()
 			case anything.RM:
 				log.Println("RM MissionName:")
 			default:

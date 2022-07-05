@@ -54,6 +54,7 @@ type Mission struct {
 	Pursuit []any
 	A       []any
 	C       byte
+	T       chan *Mission
 }
 
 // Everything 一切都源自于根
