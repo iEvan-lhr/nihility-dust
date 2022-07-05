@@ -14,6 +14,7 @@ import (
 type Wind struct {
 	D     []any
 	M     map[string]reflect.Value
+	R     map[string]reflect.Value
 	C     map[int64]chan *anything.Mission
 	A     sync.Map
 	E     map[int64]chan struct{}
@@ -99,13 +100,15 @@ func (w *Wind) Init() {
 	}
 }
 
-func (w *Wind) RegisterRouters(values []reflect.Value) {
+func (w *Wind) RegisterRouters(values []any) {
+	w.R = make(map[string]reflect.Value)
 	for i := range values {
-		dus := values[i].Type()
+		client := reflect.ValueOf(values[i])
+		dus := client.Type()
 		for j := 0; j < dus.NumMethod(); j++ {
 			method := dus.Method(j)
 			if method.Name != "" && method.Name != " " {
-				w.M[method.Name] = values[i].MethodByName(method.Name)
+				w.R[method.Name] = client.MethodByName(method.Name)
 			}
 		}
 	}
