@@ -14,8 +14,8 @@ func ErrorDontExit(err error) {
 	}
 }
 
-func DoChanTemp(mission chan *Mission, pursuit []any) *Mission {
+func DoChanTemp(mission chan *Mission, pursuit []any) chan *Mission {
 	mis := Mission{Name: IM, Pursuit: pursuit, T: make(chan *Mission, 2)}
 	mission <- &mis
-	return &mis
+	return mis.T
 }
