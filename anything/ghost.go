@@ -13,3 +13,9 @@ func ErrorDontExit(err error) {
 		log.Println(err.Error())
 	}
 }
+
+func DoChanTemp(mission chan *Mission, pursuit []any) *Mission {
+	mis := Mission{Name: IM, Pursuit: pursuit, T: make(chan *Mission, 2)}
+	mission <- &mis
+	return &mis
+}

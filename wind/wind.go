@@ -33,15 +33,12 @@ func (w *Wind) Schedule(startName string, inData ...any) int64 {
 			delete(w.C, I)
 		}()
 		w.C[I] = make(chan *anything.Mission, 10)
-		tempChan := make(chan *anything.Mission, 2)
 		w.C[I] <- &anything.Mission{
 			Name:    startName,
 			Pursuit: inData,
-			T:       tempChan,
 		}
 		for {
 			mission := <-w.C[key]
-			mission.T = tempChan
 			switch mission.Name {
 			case anything.DC:
 				w.A.Store(I, mission.Pursuit)
