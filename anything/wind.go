@@ -30,9 +30,9 @@ func SchedulePipeline(Name string, mis chan *Mission, inData []any) {
 func (w *Wind) Schedule(startName string, inData []any) int64 {
 	key := GetId()
 	w.E[key] = make(chan struct{}, 10)
-	var doFunc func(i int64, name string, data ...any)
+	var doFunc func(i int64, name string, data []any)
 	w.C[key] = make(chan *Mission, 10)
-	doFunc = func(I int64, name string, data ...any) {
+	doFunc = func(I int64, name string, data []any) {
 		defer func() {
 			if err := recover(); err != nil {
 				fmt.Println("Schedule Error!------ Exit Mission", "Error:", err, "MissionName:", w.C[key])
