@@ -25,3 +25,14 @@ func DoChanN(mission chan *Mission, pursuit []any) chan *Mission {
 	mission <- &mis
 	return mis.T
 }
+
+func SetValReturn(mission *Mission, val []any) []any {
+	switch mission.C {
+	case 1:
+		return append(val, mission.Pursuit...)
+	case 2:
+		return mission.Pursuit
+	default:
+		return val
+	}
+}

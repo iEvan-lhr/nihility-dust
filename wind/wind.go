@@ -43,9 +43,17 @@ func (w *Wind) Schedule(startName string, inData ...any) int64 {
 			mission := <-w.C[I]
 			switch mission.Name {
 			case anything.DC:
-				w.A.Store(I, mission.Pursuit)
+				if val, ok := w.A.Load(I); ok {
+					w.A.Store(I, anything.SetValReturn(mission, val.([]any)))
+				} else {
+					w.A.Store(I, mission.Pursuit)
+				}
 			case anything.ExitFunction:
-				w.A.Store(I, mission.Pursuit)
+				if val, ok := w.A.Load(I); ok {
+					w.A.Store(I, anything.SetValReturn(mission, val.([]any)))
+				} else {
+					w.A.Store(I, mission.Pursuit)
+				}
 				w.E[I] <- struct{}{}
 				return
 			case anything.NM:
