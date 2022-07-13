@@ -21,80 +21,66 @@ type Wind struct {
 
 var allMission map[string]reflect.Value
 
-//var chanM map[int64]chan *Mission
-
-// Schedule 方法调度器
-func Schedule(Name string, mis chan *Mission, inData []any) {
-	//go func(k int64, m chan *Mission) {
-	//	chanM[k] = m
-	//	<-m
-	//}(key, mis)
+// SchedulePipeline  方法调度器
+func SchedulePipeline(Name string, mis chan *Mission, inData []any) {
 	allMission[Name].Call([]reflect.Value{reflect.ValueOf(mis), reflect.ValueOf(inData)})
 }
 
-//// Schedule 方法调度器
-//func (w *Wind) Schedule(startName string, inData ...any) int64 {
-//	key := w.IWork.GetId()
-//	w.E[key] = make(chan struct{}, 10)
-//	var doFunc func(i int64, name string, data ...any)
-//	w.C[key] = make(chan *anything.Mission, 10)
-//	doFunc = func(I int64, name string, data ...any) {
-//		defer func() {
-//			if err := recover(); err != nil {
-//				fmt.Println("Schedule Error!------ Exit Mission", "Error:", err, "MissionName:", w.C[key])
-//				w.E[key] <- struct{}{}
-//			}
-//			delete(w.C, I)
-//		}()
-//		w.C[I] <- &anything.Mission{
-//			Name:    name,
-//			Pursuit: data,
-//		}
-//		for {
-//			mission := <-w.C[I]
-//			switch mission.Name {
-//			//case anything.DC:
-//			//	if val, ok := w.A.Load(I); ok {
-//			//		w.A.Store(I, anything.SetValReturn(mission, val.([]any)))
-//			//	} else {
-//			//		w.A.Store(I, mission.Pursuit)
-//			//	}
-//			case anything.ExitFunction:
-//				//if val, ok := w.A.Load(I); ok {
-//				//	w.A.Store(I, anything.SetValReturn(mission, val.([]any)))
-//				//} else {
-//				//	w.A.Store(I, mission.Pursuit)
-//				//}
-//				w.E[I] <- struct{}{}
-//				return
-//			//case anything.NM:
-//			//	k := w.IWork.GetId()
-//			//	w.C[k] = mission.T
-//			//	doFunc(k, mission.Pursuit[0].(string), mission.Pursuit[1:])
-//			//case anything.IM:
-//			//	go func() {
-//			//		if err := recover(); err != nil {
-//			//			fmt.Println("Schedule Error!------ Exit Mission", "Error:", err, "MissionName:", w.C[I])
-//			//			w.E[I] <- struct{}{}
-//			//		}
-//			//		w.M[mission.Pursuit[0].(string)].Call([]reflect.Value{reflect.ValueOf(mission.T), reflect.ValueOf(mission.Pursuit[1:])})
-//			//	}()
-//			//case anything.RM:
-//			//	log.Println("RM MissionName:")
-//			default:
-//				go func() {
-//					if err := recover(); err != nil {
-//						fmt.Println("Schedule Error!------ Exit Mission", "Error:", err, "MissionName:", w.C[I])
-//						w.E[I] <- struct{}{}
-//					}
-//					w.M[mission.Name].Call([]reflect.Value{reflect.ValueOf(w.C[I]), reflect.ValueOf(mission.Pursuit)})
-//				}()
-//			}
-//		}
-//	}
-//	go doFunc(key, startName, inData)
-//	return key
-//}
+// Schedule 方法调度器
+func (w *Wind) Schedule(startName string, inData ...any) int64 {
+	key := GetId()
+	w.E[key] = make(chan struct{}, 10)
+	var doFunc func(i int64, name string, data ...any)
+	w.C[key] = make(chan *Mission, 10)
+	doFunc = func(I int64, name string, data ...any) {
+		defer func() {
+			if err := recover(); err != nil {
+				fmt.Println("Schedule Error!------ Exit Mission", "Error:", err, "MissionName:", w.C[key])
+				w.E[key] <- struct{}{}
+			}
+			delete(w.C, I)
+		}()
+		w.C[I] <- &Mission{
+			Name:    name,
+			Pursuit: data,
+		}
+		for {
+			mission := <-w.C[I]
+			switch mission.Name {
+			case DC:
+				w.A.Store(I, mission.Pursuit)
+			case ExitFunction:
+				w.A.Store(I, mission.Pursuit)
+				w.E[I] <- struct{}{}
+				return
+			case NM:
+				k := GetId()
+				w.C[k] = mission.T
+				doFunc(k, mission.Pursuit[0].(string), mission.Pursuit[1:])
+			case IM:
+				go func() {
+					if err := recover(); err != nil {
+						fmt.Println("Schedule Error!------ Exit Mission", "Error:", err, "MissionName:", w.C[I])
+						w.E[I] <- struct{}{}
+					}
+					w.M[mission.Pursuit[0].(string)].Call([]reflect.Value{reflect.ValueOf(mission.T), reflect.ValueOf(mission.Pursuit[1:])})
+				}()
+			case RM:
+				log.Println("RM MissionName:")
+			default:
+				go func() {
+					if err := recover(); err != nil {
+						fmt.Println("Schedule Error!------ Exit Mission", "Error:", err, "MissionName:", w.C[I])
+						w.E[I] <- struct{}{}
+					}
+					w.M[mission.Name].Call([]reflect.Value{reflect.ValueOf(w.C[I]), reflect.ValueOf(mission.Pursuit)})
+				}()
+			}
+		}
+	}
+	go doFunc(key, startName, inData)
+	return key
+}
 
 // Init 初始化Wind tags:"来无影去无踪"
 func (w *Wind) Init() {
