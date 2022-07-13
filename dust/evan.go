@@ -33,8 +33,14 @@ func (d *Dust) CheckString(mission chan *anything.Mission, data []any) {
 }
 
 func (d *Dust) CheckIsBig(mission chan *anything.Mission, a []any) {
-	x, y := rand.Intn(20), rand.Intn(20)
-	mission <- &anything.Mission{Name: "CountXY", Pursuit: []any{x, y}}
+	for {
+		mis := <-anything.DoChanN("CountXY", []any{rand.Intn(20), rand.Intn(20)})
+		if mis.Pursuit[0].(int) == 25 {
+			mission <- &anything.Mission{Name: "CountXY", Pursuit: []any{"SUCC"}}
+			break
+		}
+	}
+
 }
 
 func (d *Dust) AllNumber(mission chan *anything.Mission, a []any) {

@@ -12,6 +12,7 @@ func (r Ran) Empty() {
 }
 
 func (r *Ran) CountXY(mission chan *anything.Mission, a []any) {
+	//log.Println(a)
 	x, y := a[0].(int), a[1].(int)
 	mission <- &anything.Mission{Name: "AllNumber", Pursuit: []any{x + y}}
 }
