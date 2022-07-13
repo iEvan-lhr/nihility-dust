@@ -27,7 +27,7 @@ func SchedulePipeline(Name string, mis chan *Mission, inData []any) {
 }
 
 // Schedule 方法调度器
-func (w *Wind) Schedule(startName string, inData ...any) int64 {
+func (w *Wind) Schedule(startName string, inData []any) int64 {
 	key := GetId()
 	w.E[key] = make(chan struct{}, 10)
 	var doFunc func(i int64, name string, data ...any)
