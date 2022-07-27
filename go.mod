@@ -1,4 +1,4 @@
-module github.com/iEvan-lhr/nihility-dust
+module nihility-dust
 
 go 1.18
 
