@@ -55,6 +55,7 @@ func (w *Wind) Schedule(startName string, inData []any) int64 {
 				return
 			case NM:
 				k := GetId()
+				mission.T = make(chan *Mission, 2)
 				w.C[k] = mission.T
 				doFunc(k, mission.Pursuit[0].(string), mission.Pursuit[1:])
 			case IM:
