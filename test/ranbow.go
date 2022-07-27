@@ -1,7 +1,7 @@
 package test
 
 import (
-	"github.com/iEvan-lhr/nihility-dust/anything"
+	"nihility-dust/anything"
 )
 
 type Ran struct {

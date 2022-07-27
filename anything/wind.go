@@ -11,19 +11,22 @@ import (
 // Wind 实现自Home Nothing
 type Wind struct {
 	D     []any
-	M     map[string]reflect.Value
-	R     map[string]reflect.Value
+	M     sync.Map
+	R     sync.Map
 	C     map[int64]chan *Mission
 	A     sync.Map
 	E     map[int64]chan struct{}
 	IWork *Worker
 }
 
-var allMission map[string]reflect.Value
+var allMission sync.Map
 
 // SchedulePipeline  方法调度器
 func SchedulePipeline(Name string, mis chan *Mission, inData []any) {
-	allMission[Name].Call([]reflect.Value{reflect.ValueOf(mis), reflect.ValueOf(inData)})
+	load, ok := allMission.Load(Name)
+	if ok {
+		load.(reflect.Value).Call([]reflect.Value{reflect.ValueOf(mis), reflect.ValueOf(inData)})
+	}
 }
 
 // Schedule 方法调度器
@@ -64,7 +67,10 @@ func (w *Wind) Schedule(startName string, inData []any) int64 {
 						fmt.Println("Schedule Error!------ Exit Mission", "Error:", err, "MissionName:", w.C[I])
 						w.E[I] <- struct{}{}
 					}
-					w.M[mission.Pursuit[0].(string)].Call([]reflect.Value{reflect.ValueOf(mission.T), reflect.ValueOf(mission.Pursuit[1:])})
+					load, ok := w.M.Load(mission.Pursuit[0].(string))
+					if ok {
+						load.(reflect.Value).Call([]reflect.Value{reflect.ValueOf(mission.T), reflect.ValueOf(mission.Pursuit[1:])})
+					}
 				}()
 			case RM:
 				log.Println("RM MissionName:")
@@ -74,7 +80,10 @@ func (w *Wind) Schedule(startName string, inData []any) int64 {
 						fmt.Println("Schedule Error!------ Exit Mission", "Error:", err, "MissionName:", w.C[I])
 						w.E[I] <- struct{}{}
 					}
-					w.M[mission.Name].Call([]reflect.Value{reflect.ValueOf(w.C[I]), reflect.ValueOf(mission.Pursuit)})
+					load, ok := w.M.Load(mission.Name)
+					if ok {
+						load.(reflect.Value).Call([]reflect.Value{reflect.ValueOf(w.C[I]), reflect.ValueOf(mission.Pursuit)})
+					}
 				}()
 			}
 		}
@@ -91,7 +100,8 @@ func (w *Wind) Init() {
 		return
 	}
 	w.IWork = node
-	w.M = make(map[string]reflect.Value)
+	w.M = sync.Map{}
+	allMission = sync.Map{}
 	w.C = make(map[int64]chan *Mission)
 	w.E = make(map[int64]chan struct{})
 	w.A = sync.Map{}
@@ -101,25 +111,25 @@ func (w *Wind) Init() {
 		for j := 0; j < dus.NumMethod(); j++ {
 			method := dus.Method(j)
 			if method.Name != "" && method.Name != " " {
-				if _, ok := w.M[method.Name]; ok && method.Name != "Empty" {
+				if _, ok := w.M.Load(method.Name); ok && method.Name != "Empty" {
 					log.Println("panic:", method.Name, "已存在 请检查", client)
 				}
-				w.M[method.Name] = client.MethodByName(method.Name)
+				w.M.Store(method.Name, client.MethodByName(method.Name))
+				allMission.Store(method.Name, client.MethodByName(method.Name))
 			}
 		}
 	}
-	allMission = w.M
 }
 
 func (w *Wind) RegisterRouters(values []any) {
-	w.R = make(map[string]reflect.Value)
+	w.R = sync.Map{}
 	for i := range values {
 		client := reflect.ValueOf(values[i])
 		dus := client.Type()
 		for j := 0; j < dus.NumMethod(); j++ {
 			method := dus.Method(j)
 			if method.Name != "" && method.Name != " " {
-				w.R[method.Name] = client.MethodByName(method.Name)
+				w.R.Store(method.Name, client.MethodByName(method.Name))
 			}
 		}
 	}
