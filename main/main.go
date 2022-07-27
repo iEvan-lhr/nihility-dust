@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"nihility-dust/anything"
-	"nihility-dust/dust"
-	"nihility-dust/test"
+	"github.com/iEvan-lhr/nihility-dust/anything"
+	"github.com/iEvan-lhr/nihility-dust/dust"
+	"github.com/iEvan-lhr/nihility-dust/test"
 	//"github.com/iEvan-lhr/nihility-dust/wind"
 	"math/rand"
 	"time"

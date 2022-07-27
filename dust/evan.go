@@ -2,8 +2,8 @@ package dust
 
 import (
 	"fmt"
+	"github.com/iEvan-lhr/nihility-dust/anything"
 	"math/rand"
-	"nihility-dust/anything"
 )
 
 /*

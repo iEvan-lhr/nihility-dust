@@ -1,6 +1,6 @@
 package brick
 
-import "nihility-dust/dust"
+import "github.com/iEvan-lhr/nihility-dust/dust"
 
 /*
 一砖一瓦，构建地球
