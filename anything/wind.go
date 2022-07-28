@@ -46,7 +46,7 @@ func (w *Wind) Schedule(startName string, inData []any) int64 {
 			}
 			w.C.Delete(I)
 		}()
-		load, ok := w.C.Load(key)
+		load, ok := w.C.Load(I)
 		if ok {
 			load.(chan *Mission) <- &Mission{
 				Name:    name,
@@ -55,7 +55,7 @@ func (w *Wind) Schedule(startName string, inData []any) int64 {
 		}
 
 		for {
-			mis, _ := w.C.Load(key)
+			mis, _ := w.C.Load(I)
 			mission := <-mis.(chan *Mission)
 			switch mission.Name {
 			case DC:
