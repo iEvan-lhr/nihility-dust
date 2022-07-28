@@ -13,7 +13,7 @@ type Wind struct {
 	D     []any
 	M     sync.Map
 	R     sync.Map
-	C     map[int64]chan *Mission
+	C     sync.Map
 	A     sync.Map
 	E     map[int64]chan struct{}
 	IWork *Worker
@@ -34,58 +34,80 @@ func (w *Wind) Schedule(startName string, inData []any) int64 {
 	key := GetId()
 	w.E[key] = make(chan struct{}, 10)
 	var doFunc func(i int64, name string, data []any)
-	w.C[key] = make(chan *Mission, 10)
+	w.C.Store(key, make(chan *Mission, 10))
 	doFunc = func(I int64, name string, data []any) {
 		defer func() {
 			if err := recover(); err != nil {
-				fmt.Println("Schedule Error!------ Exit Mission", "Error:", err, "MissionName:", w.C[key])
-				w.E[key] <- struct{}{}
-			}
-			delete(w.C, I)
-		}()
-		w.C[I] <- &Mission{
-			Name:    name,
-			Pursuit: data,
-		}
-		for {
-			mission := <-w.C[I]
-			switch mission.Name {
-			case DC:
-				w.A.Store(I, mission.Pursuit)
-			case ExitFunction:
-				w.A.Store(I, mission.Pursuit)
+				v, o := w.C.Load(I)
+				if o {
+					fmt.Println("Schedule Error!------ Exit Mission", "Error:", err, "MissionName:", v)
+				}
 				w.E[I] <- struct{}{}
-				return
-			case NM:
-				k := GetId()
-				mission.T = make(chan *Mission, 2)
-				w.C[k] = mission.T
-				go doFunc(k, mission.Pursuit[0].(string), mission.Pursuit[1:])
-			case IM:
-				go func() {
-					if err := recover(); err != nil {
-						fmt.Println("Schedule Error!------ Exit Mission", "Error:", err, "MissionName:", w.C[I])
-						w.E[I] <- struct{}{}
-					}
-					load, ok := w.M.Load(mission.Pursuit[0].(string))
-					if ok {
-						load.(reflect.Value).Call([]reflect.Value{reflect.ValueOf(mission.T), reflect.ValueOf(mission.Pursuit[1:])})
-					}
-				}()
-			case RM:
-				log.Println("RM MissionName:")
-			default:
-				go func() {
-					if err := recover(); err != nil {
-						fmt.Println("Schedule Error!------ Exit Mission", "Error:", err, "MissionName:", w.C[I])
-						w.E[I] <- struct{}{}
-					}
-					load, ok := w.M.Load(mission.Name)
-					if ok {
-						load.(reflect.Value).Call([]reflect.Value{reflect.ValueOf(w.C[I]), reflect.ValueOf(mission.Pursuit)})
-					}
-				}()
 			}
+			w.C.Delete(I)
+		}()
+		load, ok := w.M.Load(key)
+		if ok {
+			load.(chan *Mission) <- &Mission{
+				Name:    name,
+				Pursuit: data,
+			}
+		}
+
+		for {
+			mis, ch := w.M.Load(key)
+			if ch {
+				mission := <-mis.(chan *Mission)
+				switch mission.Name {
+				case DC:
+					w.A.Store(I, mission.Pursuit)
+				case ExitFunction:
+					w.A.Store(I, mission.Pursuit)
+					w.E[I] <- struct{}{}
+					return
+				case NM:
+					k := GetId()
+					mission.T = make(chan *Mission, 2)
+					//w.C[k] = mission.T
+					w.C.Store(k, mission.T)
+					go doFunc(k, mission.Pursuit[0].(string), mission.Pursuit[1:])
+				case IM:
+					go func() {
+						if err := recover(); err != nil {
+							v, o := w.C.Load(I)
+							if o {
+								fmt.Println("Schedule Error!------ Exit Mission", "Error:", err, "MissionName:", v)
+							}
+							w.E[I] <- struct{}{}
+						}
+						lo, ok1 := w.M.Load(mission.Pursuit[0].(string))
+						if ok1 {
+							lo.(reflect.Value).Call([]reflect.Value{reflect.ValueOf(mission.T), reflect.ValueOf(mission.Pursuit[1:])})
+						}
+					}()
+				case RM:
+					log.Println("RM MissionName:")
+				default:
+					go func() {
+						if err := recover(); err != nil {
+							v, o := w.C.Load(I)
+							if o {
+								fmt.Println("Schedule Error!------ Exit Mission", "Error:", err, "MissionName:", v)
+							}
+							w.E[I] <- struct{}{}
+							delete(w.E, I)
+						}
+						lo, ok1 := w.M.Load(mission.Name)
+						if ok1 {
+							v, o := w.C.Load(I)
+							if o {
+								lo.(reflect.Value).Call([]reflect.Value{reflect.ValueOf(v), reflect.ValueOf(mission.Pursuit)})
+							}
+						}
+					}()
+				}
+			}
+
 		}
 	}
 	go doFunc(key, startName, inData)
@@ -102,7 +124,7 @@ func (w *Wind) Init() {
 	w.IWork = node
 	w.M = sync.Map{}
 	allMission = sync.Map{}
-	w.C = make(map[int64]chan *Mission)
+	w.C = sync.Map{}
 	w.E = make(map[int64]chan struct{})
 	w.A = sync.Map{}
 	for i := range w.D {
