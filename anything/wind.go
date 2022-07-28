@@ -55,57 +55,56 @@ func (w *Wind) Schedule(startName string, inData []any) int64 {
 		}
 
 		for {
-			mis, ch := w.M.Load(key)
-			if ch {
-				mission := <-mis.(chan *Mission)
-				switch mission.Name {
-				case DC:
-					w.A.Store(I, mission.Pursuit)
-				case ExitFunction:
-					w.A.Store(I, mission.Pursuit)
-					w.E[I] <- struct{}{}
-					return
-				case NM:
-					k := GetId()
-					mission.T = make(chan *Mission, 2)
-					//w.C[k] = mission.T
-					w.C.Store(k, mission.T)
-					go doFunc(k, mission.Pursuit[0].(string), mission.Pursuit[1:])
-				case IM:
-					go func() {
-						if err := recover(); err != nil {
-							v, o := w.C.Load(I)
-							if o {
-								fmt.Println("Schedule Error!------ Exit Mission", "Error:", err, "MissionName:", v)
-							}
-							w.E[I] <- struct{}{}
+			mis, _ := w.M.Load(key)
+
+			mission := <-mis.(chan *Mission)
+			switch mission.Name {
+			case DC:
+				w.A.Store(I, mission.Pursuit)
+			case ExitFunction:
+				w.A.Store(I, mission.Pursuit)
+				w.E[I] <- struct{}{}
+				return
+			case NM:
+				k := GetId()
+				mission.T = make(chan *Mission, 2)
+				//w.C[k] = mission.T
+				w.C.Store(k, mission.T)
+				go doFunc(k, mission.Pursuit[0].(string), mission.Pursuit[1:])
+			case IM:
+				go func() {
+					if err := recover(); err != nil {
+						v, o := w.C.Load(I)
+						if o {
+							fmt.Println("Schedule Error!------ Exit Mission", "Error:", err, "MissionName:", v)
 						}
-						lo, ok1 := w.M.Load(mission.Pursuit[0].(string))
-						if ok1 {
-							lo.(reflect.Value).Call([]reflect.Value{reflect.ValueOf(mission.T), reflect.ValueOf(mission.Pursuit[1:])})
+						w.E[I] <- struct{}{}
+					}
+					lo, ok1 := w.M.Load(mission.Pursuit[0].(string))
+					if ok1 {
+						lo.(reflect.Value).Call([]reflect.Value{reflect.ValueOf(mission.T), reflect.ValueOf(mission.Pursuit[1:])})
+					}
+				}()
+			case RM:
+				log.Println("RM MissionName:")
+			default:
+				go func() {
+					if err := recover(); err != nil {
+						v, o := w.C.Load(I)
+						if o {
+							fmt.Println("Schedule Error!------ Exit Mission", "Error:", err, "MissionName:", v)
 						}
-					}()
-				case RM:
-					log.Println("RM MissionName:")
-				default:
-					go func() {
-						if err := recover(); err != nil {
-							v, o := w.C.Load(I)
-							if o {
-								fmt.Println("Schedule Error!------ Exit Mission", "Error:", err, "MissionName:", v)
-							}
-							w.E[I] <- struct{}{}
-							delete(w.E, I)
+						w.E[I] <- struct{}{}
+						delete(w.E, I)
+					}
+					lo, ok1 := w.M.Load(mission.Name)
+					if ok1 {
+						v, o := w.C.Load(I)
+						if o {
+							lo.(reflect.Value).Call([]reflect.Value{reflect.ValueOf(v), reflect.ValueOf(mission.Pursuit)})
 						}
-						lo, ok1 := w.M.Load(mission.Name)
-						if ok1 {
-							v, o := w.C.Load(I)
-							if o {
-								lo.(reflect.Value).Call([]reflect.Value{reflect.ValueOf(v), reflect.ValueOf(mission.Pursuit)})
-							}
-						}
-					}()
-				}
+					}
+				}()
 			}
 
 		}
