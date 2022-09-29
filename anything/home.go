@@ -63,3 +63,8 @@ type Everything interface {
 	Empty()
 	map[int]string
 }
+
+type FOX interface {
+	Init()
+	DoMaps() chan struct{}
+}

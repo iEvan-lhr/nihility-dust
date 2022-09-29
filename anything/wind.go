@@ -16,13 +16,18 @@ type Wind struct {
 	C     sync.Map
 	A     sync.Map
 	E     map[int64]chan struct{}
+	f     FOX
 	IWork *Worker
 }
 
+var wind *Wind
 var allMission sync.Map
 
 // SchedulePipeline  方法调度器
 func SchedulePipeline(Name string, mis chan *Mission, inData []any) {
+	if wind.f != nil {
+		wind.f.DoMaps()
+	}
 	load, ok := allMission.Load(Name)
 	if ok {
 		load.(reflect.Value).Call([]reflect.Value{reflect.ValueOf(mis), reflect.ValueOf(inData)})
@@ -31,6 +36,9 @@ func SchedulePipeline(Name string, mis chan *Mission, inData []any) {
 
 // Schedule 方法调度器
 func (w *Wind) Schedule(startName string, inData []any) int64 {
+	if w.f != nil {
+		w.f.DoMaps()
+	}
 	key := GetId()
 	w.E[key] = make(chan struct{}, 10)
 	var doFunc func(i int64, name string, data []any)
@@ -53,7 +61,6 @@ func (w *Wind) Schedule(startName string, inData []any) int64 {
 				Pursuit: data,
 			}
 		}
-
 		for {
 			mis, _ := w.C.Load(I)
 			mission := <-mis.(chan *Mission)
@@ -114,6 +121,7 @@ func (w *Wind) Schedule(startName string, inData []any) int64 {
 
 // Init 初始化Wind tags:"来无影去无踪"
 func (w *Wind) Init() {
+	wind = w
 	node, err := NewWorker(1)
 	if err != nil {
 		fmt.Println(err)
