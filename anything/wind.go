@@ -168,3 +168,11 @@ func (w *Wind) RegisterRouters(values []any) {
 func (w *Wind) Register(a ...any) {
 	w.D = append(w.D, a...)
 }
+
+func (w *Wind) SetController(f FOX) {
+	if f != nil {
+		w.f = f
+	} else {
+		panic("not implemented")
+	}
+}
