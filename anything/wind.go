@@ -2,6 +2,8 @@ package anything
 
 import (
 	"fmt"
+	"runtime"
+	"strings"
 
 	"log"
 	"reflect"
@@ -23,14 +25,55 @@ type Wind struct {
 var wind *Wind
 var allMission sync.Map
 
+var easyModel sync.Map
+
+func init() {
+	easyModel = sync.Map{}
+}
+
 // SchedulePipeline  方法调度器
 func SchedulePipeline(Name string, mis chan *Mission, inData []any) {
-	if wind.f != nil {
+	if wind != nil && wind.f != nil {
 		wind.f.DoMaps()
 	}
 	load, ok := allMission.Load(Name)
 	if ok {
 		load.(reflect.Value).Call([]reflect.Value{reflect.ValueOf(mis), reflect.ValueOf(inData)})
+	} else {
+		load, ok = easyModel.Load(Name)
+		if ok {
+			call := load.(reflect.Value).Call(GetReflectValues(inData))
+			var res []any
+			for _, value := range call {
+				res = append(res, value.Interface())
+			}
+			mis <- &Mission{Name: RM, Pursuit: res}
+		} else {
+			panic("Func is not find:" + Name)
+		}
+	}
+}
+
+func AddEasyMission(model []any) {
+	for i := range model {
+		value := reflect.ValueOf(model[i])
+		switch value.Kind() {
+		case 19:
+			name := strings.Split(runtime.FuncForPC(value.Pointer()).Name(), ".")
+			easyModel.Store(name[len(name)-1], value)
+		case 22:
+			dus := value.Type()
+			for j := 0; j < dus.NumMethod(); j++ {
+				method := dus.Method(j)
+				if method.Name != "" && method.Name != " " {
+					if _, ok := easyModel.Load(method.Name); ok && method.Name != "Empty" {
+						log.Println("panic:", method.Name, "已存在 请检查", value)
+					} else {
+						easyModel.Store(method.Name, value.MethodByName(method.Name))
+					}
+				}
+			}
+		}
 	}
 }
 

@@ -2,6 +2,7 @@ package anything
 
 import (
 	"log"
+	"reflect"
 )
 
 func ErrorExit(err error) {
@@ -26,4 +27,12 @@ func DoChanN(Name string, pursuit []any) chan *Mission {
 	mis := Mission{Name: Name, Pursuit: pursuit, T: make(chan *Mission, 2)}
 	SchedulePipeline(Name, mis.T, pursuit)
 	return mis.T
+}
+
+func GetReflectValues(data []any) []reflect.Value {
+	var rf []reflect.Value
+	for _, datum := range data {
+		rf = append(rf, reflect.ValueOf(datum))
+	}
+	return rf
 }
