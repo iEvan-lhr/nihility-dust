@@ -97,17 +97,15 @@ func AddEasyMission(model []any) {
 
 // Schedule 方法调度器
 func (w *Wind) Schedule(startName string, inData []any) int64 {
+	var do chan struct{}
 	if w.f != nil {
-		do := w.f.DoMaps()
-		defer func() {
-			do <- struct{}{}
-		}()
+		do = w.f.DoMaps()
 	}
 	key := GetId()
 	w.E[key] = make(chan struct{}, 10)
-	var doFunc func(i int64, name string, data []any)
+	var doFunc func(i int64, name string, data []any, doChan chan struct{})
 	w.C.Store(key, make(chan *Mission, 10))
-	doFunc = func(I int64, name string, data []any) {
+	doFunc = func(I int64, name string, data []any, doChan chan struct{}) {
 		defer func() {
 			if err := recover(); err != nil {
 				v, o := w.C.Load(I)
@@ -117,6 +115,9 @@ func (w *Wind) Schedule(startName string, inData []any) int64 {
 				w.E[I] <- struct{}{}
 			}
 			w.C.Delete(I)
+			if w.f != nil && doChan != nil {
+				doChan <- struct{}{}
+			}
 		}()
 		load, ok := w.C.Load(I)
 		if ok {
@@ -140,7 +141,11 @@ func (w *Wind) Schedule(startName string, inData []any) int64 {
 				mission.T = make(chan *Mission, 2)
 				//w.C[k] = mission.T
 				w.C.Store(k, mission.T)
-				go doFunc(k, mission.Pursuit[0].(string), mission.Pursuit[1:])
+				var newDo chan struct{}
+				if w.f != nil {
+					newDo = w.f.DoMaps()
+				}
+				go doFunc(k, mission.Pursuit[0].(string), mission.Pursuit[1:], newDo)
 			case IM:
 				go func() {
 					if err := recover(); err != nil {
@@ -179,7 +184,7 @@ func (w *Wind) Schedule(startName string, inData []any) int64 {
 
 		}
 	}
-	go doFunc(key, startName, inData)
+	go doFunc(key, startName, inData, do)
 	return key
 }
 
@@ -233,9 +238,15 @@ func (w *Wind) Register(a ...any) {
 	w.D = append(w.D, a...)
 }
 
-func (w *Wind) SetController(f FOX) {
+func SetController(f FOX) {
 	if f != nil {
-		w.f = f
+		if wind == nil {
+			wind = &Wind{
+				f: f,
+			}
+		} else {
+			wind.f = f
+		}
 	} else {
 		panic("not implemented")
 	}
