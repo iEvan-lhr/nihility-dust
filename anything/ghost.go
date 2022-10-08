@@ -17,10 +17,22 @@ func ErrorDontExit(err error) {
 	}
 }
 
-func DoChanTemp(mission chan *Mission, pursuit []any) chan *Mission {
-	mis := Mission{Name: IM, Pursuit: pursuit, T: make(chan *Mission, 2)}
-	mission <- &mis
-	return mis.T
+func DoChanTemp(starName string, pursuit []any, model int) (chan struct{}, chan *Mission) {
+	mis := make(chan *Mission)
+	schedule := wind.Schedule(starName, pursuit)
+	if model == 0 {
+		return wind.E[schedule], nil
+	} else {
+		do := wind.f.DoMaps()
+		go func() {
+			<-wind.E[schedule]
+			mission, _ := wind.A.Load(schedule)
+			mis <- &Mission{Pursuit: mission.([]any)}
+			delete(wind.E, schedule)
+			do <- struct{}{}
+		}()
+		return nil, mis
+	}
 }
 
 func DoChanN(Name string, pursuit []any) chan *Mission {

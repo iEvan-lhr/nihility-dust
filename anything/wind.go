@@ -12,19 +12,33 @@ import (
 
 // Wind 实现自Home Nothing
 type Wind struct {
-	D     []any
-	M     sync.Map
-	R     sync.Map
-	C     sync.Map
-	A     sync.Map
-	E     map[int64]chan struct{}
-	f     FOX
+	D []any
+	// M wind 中的func集合
+	M sync.Map
+	// R wind 中的Router集合
+	R sync.Map
+	// C wind 中的Channel集合
+	C sync.Map
+	// A wind 中的返回值集合 在捕获到A中的返回值后 任务流程会默认认为已完成任务流
+	A sync.Map
+	// E wind 中的外部判段Map 注：不推荐使用异步操作此Map 可能会出现操作异常
+	E map[int64]chan struct{}
+	// f wind 中的FOX控制器 基于系统阈值来调度任务,均衡调度系统使用,避免出现任务长等待情况,基准测试效率偏差不超过15%
+	// 通过 SetController() 方法来设置控制器 需要实现FOX接口
+	f FOX
+	// IWork 基于雪花闪电算法的唯一键ID生成器 避免任务冲突 无需手动初始化
+	// 如需初始化可通过 Wind.IWork=&struct 来设置 必须实现 NewWorker(workerId int64) (*Worker, error) 和 GetId() int64 方法
 	IWork *Worker
 }
 
+// wind  指针类型的wind 外部不可操作 用于easyModel的操作
 var wind *Wind
+
+// allMission wind中的任务map的Copy用于执行异步中的短同步任务
 var allMission sync.Map
 
+// easyModel 非路由模式下的注册方法,使用非路由的模式进行执行 在需要高效率的开发过程中不推荐使用这种模式来开发 对代码耦合度较高的环境可以快速解耦
+// 可通过不同包中的 init() 方法初始化需要解耦的方法 通过反射模式执行
 var easyModel sync.Map
 
 func init() {
@@ -34,7 +48,10 @@ func init() {
 // SchedulePipeline  方法调度器
 func SchedulePipeline(Name string, mis chan *Mission, inData []any) {
 	if wind != nil && wind.f != nil {
-		wind.f.DoMaps()
+		do := wind.f.DoMaps()
+		defer func() {
+			do <- struct{}{}
+		}()
 	}
 	load, ok := allMission.Load(Name)
 	if ok {
@@ -54,6 +71,7 @@ func SchedulePipeline(Name string, mis chan *Mission, inData []any) {
 	}
 }
 
+// AddEasyMission 添加easyModel中的任务
 func AddEasyMission(model []any) {
 	for i := range model {
 		value := reflect.ValueOf(model[i])
@@ -80,7 +98,10 @@ func AddEasyMission(model []any) {
 // Schedule 方法调度器
 func (w *Wind) Schedule(startName string, inData []any) int64 {
 	if w.f != nil {
-		w.f.DoMaps()
+		do := w.f.DoMaps()
+		defer func() {
+			do <- struct{}{}
+		}()
 	}
 	key := GetId()
 	w.E[key] = make(chan struct{}, 10)
