@@ -35,6 +35,10 @@ func DoChanTemp(starName string, pursuit []any, model int) (chan struct{}, chan 
 	}
 }
 
+func DoOnceMission(starName string, pursuit []any) {
+	OnceSchedule(starName, pursuit)
+}
+
 func DoChanN(Name string, pursuit []any) chan *Mission {
 	mis := Mission{Name: Name, Pursuit: pursuit, T: make(chan *Mission, 2)}
 	SchedulePipeline(Name, mis.T, pursuit)

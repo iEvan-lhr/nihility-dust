@@ -45,6 +45,25 @@ func init() {
 	easyModel = sync.Map{}
 }
 
+// OnceSchedule 单步任务调度器
+func OnceSchedule(Name string, inData []any) {
+	go func() {
+		if wind != nil && wind.f != nil {
+			do := wind.f.DoMaps()
+			defer func() {
+				do <- struct{}{}
+			}()
+		}
+		if err := recover(); err != nil {
+			log.Println(err)
+		}
+		load, ok := allMission.Load(Name)
+		if ok {
+			load.(reflect.Value).Call([]reflect.Value{reflect.ValueOf(inData)})
+		}
+	}()
+}
+
 // SchedulePipeline  方法调度器
 func SchedulePipeline(Name string, mis chan *Mission, inData []any) {
 	if wind != nil && wind.f != nil {
@@ -97,15 +116,18 @@ func AddEasyMission(model []any) {
 
 // Schedule 方法调度器
 func (w *Wind) Schedule(startName string, inData []any) int64 {
+	//log.Println(startName)
 	var do chan struct{}
 	if w.f != nil {
 		do = w.f.DoMaps()
+		//log.Println("初始化协程",do)
 	}
 	key := GetId()
 	w.E[key] = make(chan struct{}, 10)
 	var doFunc func(i int64, name string, data []any, doChan chan struct{})
 	w.C.Store(key, make(chan *Mission, 10))
 	doFunc = func(I int64, name string, data []any, doChan chan struct{}) {
+		//log.Println("执行任务",doChan,name)
 		defer func() {
 			if err := recover(); err != nil {
 				v, o := w.C.Load(I)
@@ -133,19 +155,11 @@ func (w *Wind) Schedule(startName string, inData []any) int64 {
 			case DC:
 				w.A.Store(I, mission.Pursuit)
 			case ExitFunction:
-				w.A.Store(I, mission.Pursuit)
+				if mission.Pursuit != nil {
+					w.A.Store(I, mission.Pursuit)
+				}
 				w.E[I] <- struct{}{}
 				return
-			case NM:
-				k := GetId()
-				mission.T = make(chan *Mission, 2)
-				//w.C[k] = mission.T
-				w.C.Store(k, mission.T)
-				var newDo chan struct{}
-				if w.f != nil {
-					newDo = w.f.DoMaps()
-				}
-				go doFunc(k, mission.Pursuit[0].(string), mission.Pursuit[1:], newDo)
 			case IM:
 				go func() {
 					if err := recover(); err != nil {
@@ -164,6 +178,10 @@ func (w *Wind) Schedule(startName string, inData []any) int64 {
 				log.Println("RM MissionName:")
 			default:
 				go func() {
+					var newDo chan struct{}
+					if w.f != nil {
+						newDo = w.f.DoMaps()
+					}
 					if err := recover(); err != nil {
 						v, o := w.C.Load(I)
 						if o {
@@ -171,6 +189,17 @@ func (w *Wind) Schedule(startName string, inData []any) int64 {
 						}
 						w.E[I] <- struct{}{}
 						delete(w.E, I)
+					}
+					if mission.Name[0] == '-' {
+						mission.Name = mission.Name[1:]
+						defer func() {
+							mis.(chan *Mission) <- &Mission{Name: ExitFunction, Pursuit: nil}
+							newDo <- struct{}{}
+						}()
+					} else {
+						defer func() {
+							newDo <- struct{}{}
+						}()
 					}
 					lo, ok1 := w.M.Load(mission.Name)
 					if ok1 {
