@@ -15,6 +15,7 @@ func main() {
 	//rand.Seed(time.Now().UnixNano())
 	////入口
 	start := time.Now()
+	fmt.Println("Test")
 	////key := w.Schedule("CheckIsBig", 25)
 	//// 出口
 	//mis := <-anything.DoChanN("CheckIsBig", []any{25})
