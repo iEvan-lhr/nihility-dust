@@ -144,8 +144,6 @@ func (w *Wind) Schedule(startName string, inData []any) int64 {
 				if o {
 					fmt.Println("Schedule Error!------ Exit Mission", "Error:", err, "MissionName:", v)
 				}
-				//给出返回值  外部可获取执行完成状态 未支持异步操作
-				w.E[I] <- struct{}{}
 			}
 			//删除 初始化完成的协程
 			w.C.Delete(I)
@@ -153,6 +151,8 @@ func (w *Wind) Schedule(startName string, inData []any) int64 {
 				//回收协程控制器
 				doChan <- struct{}{}
 			}
+			//给出返回值  外部可获取执行完成状态 未支持异步操作
+			w.E[I] <- struct{}{}
 		}()
 		//读取协程 I=KEY
 		load, ok := w.C.Load(I)
