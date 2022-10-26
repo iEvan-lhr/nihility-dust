@@ -60,6 +60,15 @@ func OnceSchedule(Name string, inData []any) {
 		load, ok := allMission.Load(Name)
 		if ok {
 			load.(reflect.Value).Call([]reflect.Value{reflect.ValueOf(inData)})
+		} else {
+			// 简单模式调度
+			load, ok = easyModel.Load(Name)
+			if ok {
+				// 不支持有返回值的单次调度模式
+				load.(reflect.Value).Call(GetReflectValues(inData))
+			} else {
+				panic("Func is not find:" + Name)
+			}
 		}
 	}()
 }
