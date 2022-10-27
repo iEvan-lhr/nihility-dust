@@ -17,7 +17,7 @@ func ErrorDontExit(err error) {
 	}
 }
 
-func DoChanTemp(starName string, pursuit []any, model int) (chan struct{}, chan *Mission) {
+func DoChanTemp(starName string, pursuit []interface{}, model int) (chan struct{}, chan *Mission) {
 	mis := make(chan *Mission)
 	schedule := wind.Schedule(starName, pursuit)
 	if model == 0 {
@@ -27,7 +27,7 @@ func DoChanTemp(starName string, pursuit []any, model int) (chan struct{}, chan 
 		go func() {
 			<-wind.E[schedule]
 			mission, _ := wind.A.Load(schedule)
-			mis <- &Mission{Pursuit: mission.([]any)}
+			mis <- &Mission{Pursuit: mission.([]interface{})}
 			delete(wind.E, schedule)
 			do <- struct{}{}
 		}()
@@ -35,17 +35,17 @@ func DoChanTemp(starName string, pursuit []any, model int) (chan struct{}, chan 
 	}
 }
 
-func DoOnceMission(starName string, pursuit []any) {
+func DoOnceMission(starName string, pursuit []interface{}) {
 	OnceSchedule(starName, pursuit)
 }
 
-func DoChanN(Name string, pursuit []any) chan *Mission {
+func DoChanN(Name string, pursuit []interface{}) chan *Mission {
 	mis := Mission{Name: Name, Pursuit: pursuit, T: make(chan *Mission, 2)}
 	SchedulePipeline(Name, mis.T, pursuit)
 	return mis.T
 }
 
-func GetReflectValues(data []any) []reflect.Value {
+func GetReflectValues(data []interface{}) []reflect.Value {
 	var rf []reflect.Value
 	for _, datum := range data {
 		rf = append(rf, reflect.ValueOf(datum))

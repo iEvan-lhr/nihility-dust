@@ -12,7 +12,7 @@ import (
 
 // Wind 实现自Home Nothing
 type Wind struct {
-	D []any
+	D []interface{}
 	// M wind 中的func集合
 	M sync.Map
 	// R wind 中的Router集合
@@ -46,7 +46,7 @@ func init() {
 }
 
 // OnceSchedule 单步任务调度器
-func OnceSchedule(Name string, inData []any) {
+func OnceSchedule(Name string, inData []interface{}) {
 	go func() {
 		if wind != nil && wind.f != nil {
 			do := wind.f.DoMaps()
@@ -74,7 +74,7 @@ func OnceSchedule(Name string, inData []any) {
 }
 
 // SchedulePipeline  方法调度器
-func SchedulePipeline(Name string, mis chan *Mission, inData []any) {
+func SchedulePipeline(Name string, mis chan *Mission, inData []interface{}) {
 	if wind != nil && wind.f != nil {
 		do := wind.f.DoMaps()
 		defer func() {
@@ -90,7 +90,7 @@ func SchedulePipeline(Name string, mis chan *Mission, inData []any) {
 		load, ok = easyModel.Load(Name)
 		if ok {
 			call := load.(reflect.Value).Call(GetReflectValues(inData))
-			var res []any
+			var res []interface{}
 			for _, value := range call {
 				res = append(res, value.Interface())
 			}
@@ -102,7 +102,7 @@ func SchedulePipeline(Name string, mis chan *Mission, inData []any) {
 }
 
 // AddEasyMission 添加easyModel中的任务
-func AddEasyMission(model []any) {
+func AddEasyMission(model []interface{}) {
 	for i := range model {
 		value := reflect.ValueOf(model[i])
 		switch value.Kind() {
@@ -128,7 +128,7 @@ func AddEasyMission(model []any) {
 }
 
 // Schedule 方法调度器
-func (w *Wind) Schedule(startName string, inData []any) int64 {
+func (w *Wind) Schedule(startName string, inData []interface{}) int64 {
 	//log.Println(startName)
 	var do chan struct{}
 	if w.f != nil {
@@ -140,11 +140,11 @@ func (w *Wind) Schedule(startName string, inData []any) int64 {
 	key := GetId()
 
 	w.E[key] = make(chan struct{}, 10)
-	var doFunc func(i int64, name string, data []any, doChan chan struct{})
+	var doFunc func(i int64, name string, data []interface{}, doChan chan struct{})
 	//根据KEY 初始化协程
 	w.C.Store(key, make(chan *Mission, 10))
 	//方法执行器  执行多种状态
-	doFunc = func(I int64, name string, data []any, doChan chan struct{}) {
+	doFunc = func(I int64, name string, data []interface{}, doChan chan struct{}) {
 		//log.Println("执行任务",doChan,name)
 		//defer 释放操作
 		defer func() {
@@ -283,7 +283,7 @@ func (w *Wind) Init() {
 }
 
 // RegisterRouters 注册路由
-func (w *Wind) RegisterRouters(values []any) {
+func (w *Wind) RegisterRouters(values []interface{}) {
 	w.R = sync.Map{}
 	for i := range values {
 		client := reflect.ValueOf(values[i])
@@ -299,7 +299,7 @@ func (w *Wind) RegisterRouters(values []any) {
 
 // Register 注册方法 根据结构体
 // 注：若为指针则会注册所有公开方法 非指针只会注册非指针传递方法
-func (w *Wind) Register(a ...any) {
+func (w *Wind) Register(a ...interface{}) {
 	w.D = append(w.D, a...)
 }
 

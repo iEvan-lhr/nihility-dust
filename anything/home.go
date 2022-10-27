@@ -31,8 +31,8 @@ const IM = "INTERRUPT_MISSION"
 const RM = "RECOVERY_MISSION"
 
 type Nothing interface {
-	Register(...any)
-	Schedule(string, []any) int64
+	Register(...interface{})
+	Schedule(string, []interface{}) int64
 	Init()
 }
 
@@ -41,8 +41,8 @@ type Nothing interface {
 type Mission struct {
 	Name    string
 	I       int64
-	Pursuit []any
-	A       []any
+	Pursuit []interface{}
+	A       []interface{}
 	C       byte
 	T       chan *Mission
 }
