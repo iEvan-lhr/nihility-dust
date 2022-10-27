@@ -51,7 +51,6 @@ type Mission struct {
 // Everything comes from the root
 type Everything interface {
 	Empty()
-	map[int]string
 }
 
 type FOX interface {
