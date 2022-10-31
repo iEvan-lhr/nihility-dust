@@ -75,30 +75,32 @@ func OnceSchedule(Name string, inData []any) {
 
 // SchedulePipeline  方法调度器
 func SchedulePipeline(Name string, mis chan *Mission, inData []any) {
-	if wind != nil && wind.f != nil {
-		do := wind.f.DoMaps()
-		defer func() {
-			do <- struct{}{}
-		}()
-	}
-	load, ok := allMission.Load(Name)
-	if ok {
-		// 流程控制器调度
-		load.(reflect.Value).Call([]reflect.Value{reflect.ValueOf(mis), reflect.ValueOf(inData)})
-	} else {
-		// 简单模式调度
-		load, ok = easyModel.Load(Name)
-		if ok {
-			call := load.(reflect.Value).Call(GetReflectValues(inData))
-			var res []any
-			for _, value := range call {
-				res = append(res, value.Interface())
-			}
-			mis <- &Mission{Name: RM, Pursuit: res}
-		} else {
-			panic("Func is not find:" + Name)
+	go func() {
+		if wind != nil && wind.f != nil {
+			do := wind.f.DoMaps()
+			defer func() {
+				do <- struct{}{}
+			}()
 		}
-	}
+		load, ok := allMission.Load(Name)
+		if ok {
+			// 流程控制器调度
+			load.(reflect.Value).Call([]reflect.Value{reflect.ValueOf(mis), reflect.ValueOf(inData)})
+		} else {
+			// 简单模式调度
+			load, ok = easyModel.Load(Name)
+			if ok {
+				call := load.(reflect.Value).Call(GetReflectValues(inData))
+				var res []any
+				for _, value := range call {
+					res = append(res, value.Interface())
+				}
+				mis <- &Mission{Name: RM, Pursuit: res}
+			} else {
+				panic("Func is not find:" + Name)
+			}
+		}
+	}()
 }
 
 // AddEasyMission 添加easyModel中的任务
