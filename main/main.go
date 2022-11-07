@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/iEvan-lhr/nihility-dust/anything"
 	"time"
 )
 
@@ -15,7 +16,9 @@ func main() {
 	//rand.Seed(time.Now().UnixNano())
 	////入口
 	start := time.Now()
-	fmt.Println("Test")
+	//fmt.Println("Test")
+	anything.AddEasyMission([]any{DoEnv})
+	<-anything.DoChanN("DoEnv", []any{[]any{"hhhh"}})
 	////key := w.Schedule("CheckIsBig", 25)
 	//// 出口
 	//mis := <-anything.DoChanN("CheckIsBig", []any{25})
@@ -28,4 +31,8 @@ func main() {
 	//log.Println(pc.Name())
 	//log.Println(of1.Call([]reflect.Value{reflect.ValueOf("ssss")}))
 	fmt.Println(time.Now().Sub(start))
+}
+
+func DoEnv(mission chan *anything.Mission, data []any) {
+
 }

@@ -90,7 +90,7 @@ func SchedulePipeline(Name string, mis chan *Mission, inData []any) {
 			// 简单模式调度
 			load, ok = easyModel.Load(Name)
 			if ok {
-				call := load.(reflect.Value).Call(GetReflectValues(inData))
+				call := load.(reflect.Value).Call(append([]reflect.Value{reflect.ValueOf(mis)}, GetReflectValues(inData)...))
 				var res []any
 				for _, value := range call {
 					res = append(res, value.Interface())
