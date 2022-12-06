@@ -35,7 +35,11 @@ func DoChanTemp(starName string, pursuit []any, model int) (chan struct{}, chan 
 	}
 }
 
-func DoOnceMission(starName string, pursuit []any) {
+func DoOnceMission(starName string, pursuit []any) []any {
+	return DoSchedule(starName, pursuit)
+}
+
+func Do(starName string, pursuit []any) {
 	OnceSchedule(starName, pursuit)
 }
 

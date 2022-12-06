@@ -73,6 +73,36 @@ func OnceSchedule(Name string, inData []any) {
 	}()
 }
 
+// DoSchedule 同步任务调度器
+func DoSchedule(Name string, inData []any) (res []any) {
+	if wind != nil && wind.f != nil {
+		do := wind.f.DoMaps()
+		defer func() {
+			do <- struct{}{}
+		}()
+	}
+	if err := recover(); err != nil {
+		log.Println(err)
+	}
+	var call []reflect.Value
+	load, ok := allMission.Load(Name)
+	if ok {
+		call = load.(reflect.Value).Call([]reflect.Value{reflect.ValueOf(inData)})
+	} else {
+		// 简单模式调度
+		load, ok = easyModel.Load(Name)
+		if ok {
+			call = load.(reflect.Value).Call(GetReflectValues(inData))
+		} else {
+			panic("Func is not find:" + Name)
+		}
+	}
+	for _, value := range call {
+		res = append(res, value.Interface())
+	}
+	return
+}
+
 // SchedulePipeline  方法调度器
 func SchedulePipeline(Name string, mis chan *Mission, inData []any) {
 	go func() {
