@@ -74,27 +74,39 @@ func OnceSchedule(Name string, inData []any) {
 }
 
 // DoSchedule 同步任务调度器
-func DoSchedule(Name string, inData []any) (res []any) {
-	if wind != nil && wind.f != nil {
-		do := wind.f.DoMaps()
-		defer func() {
-			do <- struct{}{}
+func DoSchedule(name string, inData ...any) (res []any) {
+	if len(inData) > 1 && inData[1] == 1 {
+		go func() {
+			if wind != nil && wind.f != nil {
+				do := wind.f.DoMaps()
+				defer func() {
+					do <- struct{}{}
+				}()
+			}
+			res = exec(name, inData[0].([]any))
 		}()
+	} else {
+		res = exec(name, inData[0].([]any))
 	}
+	return
+}
+
+func exec(name string, inData []any) (res []any) {
 	if err := recover(); err != nil {
 		log.Println(err)
 	}
 	var call []reflect.Value
-	load, ok := allMission.Load(Name)
+	load, ok := allMission.Load(name)
 	if ok {
-		call = load.(reflect.Value).Call([]reflect.Value{reflect.ValueOf(inData)})
+
+		call = load.(reflect.Value).Call(GetReflectValues(inData))
 	} else {
 		// 简单模式调度
-		load, ok = easyModel.Load(Name)
+		load, ok = easyModel.Load(name)
 		if ok {
 			call = load.(reflect.Value).Call(GetReflectValues(inData))
 		} else {
-			panic("Func is not find:" + Name)
+			panic("Func is not find:" + name)
 		}
 	}
 	for _, value := range call {
