@@ -1,5 +1,10 @@
 package anything
 
+import (
+	"context"
+	"sync"
+)
+
 // Package anything
 // 程序执行的道路或许以前我们需要按部就班，但也出现了很多问题。
 // 像下面这样
@@ -36,15 +41,21 @@ type Nothing interface {
 	Init()
 }
 
-//Mission 即使是灰尘 也有他的使命
-//Even the dust has his pursuit
+// Mission 即使是灰尘 也有他的使命
+// Even the dust has his pursuit
 type Mission struct {
 	Name    string
 	I       int64
 	Pursuit []any
 	A       []any
 	C       byte
-	T       chan *Mission
+	// === 新增：隐形上下文 ===
+	// 1. Context: 用于控制生命周期 (超时/取消)
+	Context context.Context
+	// 2. Store: 用于存储流程中的共享变量 (记忆)
+	// 这样业务方法就不需要在入参里显式声明 map 了
+	Store *sync.Map
+	T     chan *Mission
 }
 
 // Everything 一切都源自于根
@@ -57,4 +68,34 @@ type Everything interface {
 type FOX interface {
 	Init()
 	DoMaps() chan struct{}
+}
+
+// 辅助方法：快速获取记忆
+func (m *Mission) Get(key string) (any, bool) {
+	if m.Store == nil {
+		return nil, false
+	}
+	return m.Store.Load(key)
+}
+
+func (m *Mission) Set(key string, value any) {
+	if m.Store == nil {
+		m.Store = &sync.Map{}
+	}
+	m.Store.Store(key, value)
+}
+
+// DSLScript DSL 脚本结构
+type DSLScript struct {
+	Name  string         `json:"name"`
+	Tags  string         `json:"tags"`  // 标签，如 "network,http,crawl"
+	Vars  map[string]any `json:"vars"`  // 初始变量
+	Steps []DSLStep      `json:"steps"` // 步骤
+}
+
+// DSLStep 单个步骤
+type DSLStep struct {
+	Call string `json:"call"` // 调用的原子方法名 (Native Method)
+	Args []any  `json:"args"` // 参数，支持 "$var" 引用
+	Save string `json:"save"` // 结果存入哪个变量
 }
